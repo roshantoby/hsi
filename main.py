@@ -10,7 +10,7 @@ from dash.exceptions import PreventUpdate
 
 from pca import run_pca
 
-app = Dash(__name__)
+app = Dash(__name__, suppress_callback_exceptions=True)
 
 app.layout = html.Div([
     html.H1(children='PCA Analysis', style={'textAlign': 'center'}),
@@ -30,17 +30,18 @@ app.layout = html.Div([
                     multiple=False,
                     max_size=-1,
                     )
-         ]
+         ],
+        align="center"
     ),
-    dbc.Row([dcc.Input(id="height-input", type="number", placeholder="enter image height"),
-             dcc.Input(id="width-input", type="number", placeholder="enter image width")]),
-    dbc.Row(html.Button('Run PCA', id='pca-button', n_clicks=0)),
+    dbc.Row(dbc.Col([dcc.Input(id="height-input", type="number", placeholder="enter image height"),
+                     dcc.Input(id="width-input", type="number", placeholder="enter image width")], align="center")),
+    dbc.Row(html.Button('Run PCA', id='pca-button', n_clicks=0), align="center"),
     dbc.Row(dcc.Loading(
         id="loading-1",
         type="default",
         children=html.Div(id="loading-output-1")
     )),
-    dbc.Row(dcc.Graph(id='spectral-content'))
+    dbc.Row(id='spectral-graph-content')
 ])
 
 
@@ -96,14 +97,14 @@ def update_pca_im(value):
 
 
 @callback(
-    Output('spectral-content', 'figure'),
+    Output('spectral-graph-content', 'children'),
     Input('graph-content', 'hoverData')
 )
 def update_spectral_graph(hoverData):
     df = pd.DataFrame({'wavelength': wavelengths,
                        'intensity': hsi_im[hoverData['points'][0]['y'], hoverData['points'][0]['x'], :]})
-
-    return px.line(df, x='wavelength', y='intensity', title='Hyperspectral Data of Pixel')
+    fig = px.line(df, x='wavelength', y='intensity', title='Hyperspectral Data of Pixel')
+    return dcc.Graph(figure=fig)
 
 
 if __name__ == '__main__':
